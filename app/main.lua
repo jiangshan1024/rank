@@ -39,6 +39,7 @@ app:post("/update", function (c)
 	local uid = c.req.body.uid
 	local score = c.req.body.score
 	local info = c.req.body.info
+	local addscore = c.req.body.addscore
 
 	local proxy = rank_proxy.get(appname)
 	if proxy == nil then
@@ -47,8 +48,15 @@ app:post("/update", function (c)
 		})
 		return
 	end
-
-	local code = proxy:update(tags, uid, score, info)
+	local code = nil
+	print(addscore,tonumber(addscore))
+	if addscore and tonumber(addscore) and tonumber(addscore)~=0 then
+		code = proxy:change(tags, uid, addscore, info)
+		print("update---change")
+	else
+		code = proxy:update(tags, uid, score, info)
+		print("update---recover")
+	end
 	c:send_json({
 		code = code
 	})

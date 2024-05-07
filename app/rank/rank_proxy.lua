@@ -95,6 +95,16 @@ function M:update(tags, uid, score, info)
 	end
 	return errcode.OK
 end
+function M:change(tags, uid, addscore, info)
+	if not self:cache_services(tags) then
+		return errcode.RANK_SERVICE_CACHE_FAIL
+	end
+	for _, tag in pairs(tags) do
+		local service = self.tag2service[tag]
+		skynet.send(service, "lua", "change", uid, addscore, info)
+	end
+	return errcode.OK
+end
 
 function M:delete(tags, uid)
 	if not self:cache_services(tags) then

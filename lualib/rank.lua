@@ -21,10 +21,31 @@ function mt:_add(uid, score, info)
 		info = info,
 	}
 end
+function mt:_change(uid, addscore, info)
+	local element = self.tbl[uid]
+	local old_score = 0
+	local new_score = 0
+	if element then
+		old_score = element.score
+		self.sl:delete(element.score, uid)
+	end
+	new_score = old_score + (addscore or 0)
+	self.sl:insert(new_score, uid)
+	self.tbl[uid] = {
+		uid = uid,
+		score = new_score,
+		info = info,
+	}
+	return new_score
+end
 
 function mt:add(uid, score, info)
 	self:_add(uid, score, info)
 	self:_db_update(uid, score, info)
+end
+function mt:change(uid, addscore, info)
+	local new_score = self:_change(uid, addscore, info)
+	self:_db_update(uid, new_score, info)
 end
 
 function mt:_db_update(uid, score, info)

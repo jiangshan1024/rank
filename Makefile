@@ -3,18 +3,18 @@
 all: check
 
 LUA_CLIB_PATH ?= luaclib
-LUA_INC ?= wlua/skynet/3rd/lua
+LUA_INC ?= ../skynet/3rd/lua
 CFLAGS = -g -O0 -Wall -I$(LUA_INC)
 SHARED := -fPIC --shared
 LUA_CLIB = skiplist
 
 prebuild:
-	git submodule update --init --recursive
+	# git submodule update --init --recursive
 
 build: prebuild \
   $(LUA_CLIB_PATH) \
   $(foreach v, $(LUA_CLIB), $(LUA_CLIB_PATH)/$(v).so)
-	cd wlua && $(MAKE)
+	# cd wlua && $(MAKE)
 
 clean:
 	rm -f luaclib/*

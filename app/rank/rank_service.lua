@@ -52,6 +52,16 @@ return function(rankid)
 			rankobj:rev_limit(cfg.capacity)
 		end
 	end
+	function CMD.change(uid, addscore, info)
+		rankobj:change(uid, addscore, info)
+
+		local cfg = get_config()
+		if cfg.order == const.ASCENDING then
+			rankobj:limit(cfg.capacity)
+		else
+			rankobj:rev_limit(cfg.capacity)
+		end
+	end
 
 	function CMD.delete(uid)
 		rankobj:rem(uid)
