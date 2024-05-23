@@ -1,7 +1,7 @@
 local M = {}
 
-M.DEFAULT_TIMEOUT = 500
-M.DEFAULT_CAPACITY = 500
+M.DEFAULT_TIMEOUT = 500 --超时时间
+M.DEFAULT_CAPACITY = 1000 --排行榜容量
 
 M.ASCENDING = "ascending" -- 从小到大
 M.DESCENDING = "descending" -- 从大到小

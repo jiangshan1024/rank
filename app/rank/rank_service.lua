@@ -25,7 +25,7 @@ return function(rankid)
 		end
 		return {
 			capacity = const.DEFAULT_CAPACITY,
-			order = const.ASCENDING,
+			order = const.DESCENDING,--修改为默认从大到小
 		}
 	end
 

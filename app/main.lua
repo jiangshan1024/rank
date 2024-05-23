@@ -18,6 +18,13 @@ end)
 app:post("/setconfig", function (c)
 	local appname = c.req.body.appname
 	local config = c.req.body.config
+	local key = c.req.body.key
+	if not util.check_key("setconfig",key) then
+		c:send_json({
+			code = errcode.PERMISSION_DENIED
+		})
+		return
+	end
 
 	local proxy = rank_proxy.get(appname)
 	if proxy == nil then
@@ -40,6 +47,13 @@ app:post("/update", function (c)
 	local score = c.req.body.score
 	local info = c.req.body.info
 	local addscore = c.req.body.addscore
+	local key = c.req.body.key
+	if not util.check_key("update",key) then
+		c:send_json({
+			code = errcode.PERMISSION_DENIED
+		})
+		return
+	end
 
 	local proxy = rank_proxy.get(appname)
 	if proxy == nil then
@@ -66,6 +80,13 @@ app:post("/delete", function (c)
 	local appname = c.req.body.appname
 	local tags = c.req.body.tags
 	local uid = c.req.body.uid
+	local key = c.req.body.key
+	if not util.check_key("delete",key) then
+		c:send_json({
+			code = errcode.PERMISSION_DENIED
+		})
+		return
+	end
 
 	local proxy = rank_proxy.get(appname)
 	if proxy == nil then
@@ -85,7 +106,13 @@ app:get("/query", function (c)
 	local appname = c.req.query.appname
 	local tag = c.req.query.tag
 	local uid = c.req.query.uid
-
+	local sign = c.req.query.sign
+	if not util.check_key("query",sign,appname,tag,uid) then
+		c:send_json({
+			code = errcode.PERMISSION_DENIED
+		})
+		return
+	end
 	local proxy = rank_proxy.get(appname)
 	if proxy == nil then
 		c:send_json({
@@ -109,6 +136,14 @@ app:get("/infos", function (c)
 
 	log.debug("infos appname:", appname, ", tag:", tag, ", uids:", uids)
 
+	local key = c.req.query.key
+	if not util.check_key("infos",key) then
+		c:send_json({
+			code = errcode.PERMISSION_DENIED
+		})
+		return
+	end
+
 	local proxy = rank_proxy.get(appname)
 	if proxy == nil then
 		c:send_json({
@@ -129,7 +164,13 @@ app:get("/ranklist", function (c)
 	local tag = c.req.query.tag
 	local start = tonumber(c.req.query.start)
 	local count = tonumber(c.req.query.count)
-
+	local sign = c.req.query.sign
+	if not util.check_key("ranklist",sign,appname,tag,start,count) then
+		c:send_json({
+			code = errcode.PERMISSION_DENIED
+		})
+		return
+	end
 	local proxy = rank_proxy.get(appname)
 	if proxy == nil then
 		c:send_json({
