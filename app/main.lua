@@ -3,6 +3,7 @@ local rank_proxy = require "app.rank.rank_proxy"
 local errcode = require "app.errcode"
 local util = require "util"
 local log = require "log"
+local cjson = require "cjson"
 
 local app = wlua:default()
 
@@ -48,7 +49,7 @@ app:post("/update", function (c)
 	local info = c.req.body.info
 	local addscore = c.req.body.addscore
 	local key = c.req.body.key
-	if not util.check_key("update",key) then
+	if not util.check_key("update",key,appname,cjson.encode(tags),uid,score,addscore) then
 		c:send_json({
 			code = errcode.PERMISSION_DENIED
 		})
