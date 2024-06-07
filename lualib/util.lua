@@ -36,7 +36,7 @@ function M.check_key(op,sign,appname,tag,arg1,arg2)
 			log.info("三方查询appname错误")
 			return
 		end
-		local mysign = md5.sumhexa(string.format("%s%s%s%s%s",appname,tag,arg1,arg2,keys[appname]))
+		local mysign = md5.sumhexa(string.format("%s%s%s%s%s",appname,arg1,arg2,keys[appname]))
 		if sign ~= mysign then
 			log.info("三方查询签名错误",sign,mysign)
 			return 

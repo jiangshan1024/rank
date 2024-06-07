@@ -16,7 +16,31 @@ app:get("/ping", function (c)
 	c:send("pong")
 end)
 
-app:post("/setconfig", function (c)
+app:post("/setsetting", function (c)
+	local config = c.req.body.config
+	local appname = c.req.body.appname
+	local key = c.req.body.key
+	if not util.check_key("setsetting",key) then
+		c:send_json({
+			code = errcode.PERMISSION_DENIED
+		})
+		return
+	end
+
+	local proxy = rank_proxy.get(appname)
+	if proxy == nil then
+		c:send_json({
+			code = errcode.RANK_INIT_FAIL
+		})
+		return
+	end
+	local code = proxy:set_setting(config)
+	c:send_json({
+		code = code
+	})
+end)
+
+app:post("/setappconfig", function (c)
 	local appname = c.req.body.appname
 	local config = c.req.body.config
 	local key = c.req.body.key
@@ -34,7 +58,6 @@ app:post("/setconfig", function (c)
 		})
 		return
 	end
-
 	local code = proxy:set_config(config)
 	c:send_json({
 		code = code
@@ -107,6 +130,7 @@ app:get("/query", function (c)
 	local appname = c.req.query.appname
 	local tag = c.req.query.tag
 	local uid = c.req.query.uid
+	local today = c.req.query.today
 	local sign = c.req.query.sign
 	if not util.check_key("query",sign,appname,tag,uid) then
 		c:send_json({
@@ -122,7 +146,7 @@ app:get("/query", function (c)
 		return
 	end
 
-	local code, element, rank = proxy:query(tag, uid)
+	local code, element, rank = proxy:query(today,uid)
 	c:send_json({
 		code = code,
 		element = element,
@@ -133,9 +157,10 @@ end)
 app:get("/infos", function (c)
 	local appname = c.req.query.appname
 	local tag = c.req.query.tag
+	local today = c.req.query.today
 	local uids = util.string_split(c.req.query.uids, ",")
 
-	log.debug("infos appname:", appname, ", tag:", tag, ", uids:", uids)
+	log.debug("infos appname:", appname, ", uids:", uids)
 
 	local key = c.req.query.key
 	if not util.check_key("infos",key) then
@@ -153,7 +178,7 @@ app:get("/infos", function (c)
 		return
 	end
 
-	local code, elements = proxy:infos(tag, uids)
+	local code, elements = proxy:infos(today,uids)
 	c:send_json({
 		code = code,
 		elements = elements,
@@ -162,6 +187,7 @@ end)
 
 app:get("/ranklist", function (c)
 	local appname = c.req.query.appname
+	local today = c.req.query.today
 	local tag = c.req.query.tag
 	local start = tonumber(c.req.query.start)
 	local count = tonumber(c.req.query.count)
@@ -180,7 +206,7 @@ app:get("/ranklist", function (c)
 		return
 	end
 
-	local code, elements = proxy:ranklist(tag, start, count)
+	local code, elements = proxy:ranklist(today,start, count)
 	c:send_json({
 		code = code,
 		elements = elements,

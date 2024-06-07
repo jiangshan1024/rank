@@ -7,7 +7,7 @@ return function()
 	local util_table = require "util.table"
 	local rankidlib = require "app.rank.rankid"
 	local errcode = require "app.errcode"
-
+	local cjson = require "cjson"
 	local CMD = {}
 
 	local function load_rank_service(t, rankid)
@@ -23,6 +23,41 @@ return function()
 	function CMD.get_rank_service(appname, tag)
 		local rankid = rankidlib.get_rankid(appname, tag)
 		return ranks[rankid]
+	end
+
+	function CMD.get_setting(appname)
+		local query = {appname = appname,setting_name="query_limit"}
+		local dbtbl = db.get_setting_dbtbl()
+		local ret = dbtbl:findOne(query,{_id = false})
+		-- log.debug(ret,"rankmgr_service",cjson.encode(ret))
+		if ret then
+			return ret.data
+		else
+			return {}
+		end
+	end
+
+	function CMD.set_setting(appname,config)
+
+		log.info("set_setting", config)
+		if (type(config) ~= "string") then
+			config = cjson.encode(config)
+		end
+		-- 写入数据库
+		local dbtbl = db.get_setting_dbtbl()
+		local query = {setting_name = "query_limit",appname=appname}
+		local update = {data = config}
+		local ok, err = dbtbl:safe_update(query, {['$set'] = update},true)
+		if not ok  then
+			log.error("set_setting save failed. ", ", config:", util_table.tostring(config), ", err:", err)
+			return errcode.SAVE_DB_FAIL
+		end
+
+		-- 通知所有 rank_service 清空缓存
+		for _, addr in pairs(ranks) do
+			skynet.send(addr, "lua", "clear_setting_config_cache")
+		end
+		return errcode.OK
 	end
 
 	function CMD.set_config(appname, config)
@@ -63,6 +98,7 @@ return function()
 			skynet.ret(skynet.pack(f(...)))
 		else
 			log.error(string.format("Unknown cmd:%s, source:%s", cmd, source))
+			skynet.ret(skynet.pack(errcode.RANK_SERVICE_CALL_FAIL))
 		end
 	end)
 end

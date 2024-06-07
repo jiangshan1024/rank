@@ -3,6 +3,7 @@ local skynet = require "skynet"
 local errcode = require "app.errcode"
 local const = require "app.const"
 local rankmgr = require "app.rank.rankmgr"
+local cjson = require "cjson"
 
 local M = {}
 local mt = { __index = M }
@@ -49,6 +50,10 @@ end
 
 function M:set_config(config)
 	return timeout_call(rankmgr.addr, "lua", "set_config", self.appname, config)
+end
+
+function M:set_setting(config)
+	return timeout_call(rankmgr.addr, "lua", "set_setting", self.appname,config)
 end
 
 function M:cache_services(tags)
@@ -117,16 +122,62 @@ function M:delete(tags, uid)
 	return errcode.OK
 end
 
-function M:query(tag, uid)
+function M:query(today,uid)
+	--tag要从配置里面获取，如果没配就是不允许请求
+	-- if not self:cache_services({tag}) then
+	-- 	return errcode.RANK_SERVICE_CACHE_FAIL
+	-- end
+
+	local setting =  timeout_call(rankmgr.addr, "lua", "get_setting", self.appname)
+	if type(setting) == "string" then
+		local ok,_setting = pcall(cjson.decode,setting)
+		if not ok then
+			return errcode.NO_CONFIG
+		end
+		setting = _setting
+	end
+	-- local tg,server = next(self.tag2service)
+	-- log.info(tg,server,self.tag2service[tg])
+	-- local setting = skynet.call(server,"lua","get_setting")
+	local tag = setting.tag
+	if not tag or tag == "nil" then
+		return errcode.NO_CONFIG
+	end
+	if today then
+		tag = tag .. os.date("%Y%m%d")
+	else
+		tag = tag .. os.date("%Y%m%d",os.time() - 86400)
+	end
 	if not self:cache_services({tag}) then
 		return errcode.RANK_SERVICE_CACHE_FAIL
 	end
-
+	log.info("query",tag,uid)
 	local service = self.tag2service[tag]
 	return timeout_call(service, "lua", "query", uid)
 end
 
-function M:infos(tag, uids)
+function M:infos(today,uids)
+	--tag要从配置里面获取，如果没配就是不允许请求
+
+	local setting =  timeout_call(rankmgr.addr, "lua", "get_setting", self.appname)
+	if type(setting) == "string" then
+		local ok,_setting = pcall(cjson.decode,setting)
+		if not ok then
+			return errcode.NO_CONFIG
+		end
+		setting = _setting
+	end
+
+	local tag = setting.tag
+	if not tag or tag == "nil" then
+		return errcode.NO_CONFIG
+	end
+	if today then
+		tag = tag .. os.date("%Y%m%d")
+	else
+		tag = tag .. os.date("%Y%m%d",os.time() - 86400)
+	end
+
 	if not self:cache_services({tag}) then
 		return errcode.RANK_SERVICE_CACHE_FAIL
 	end
@@ -135,7 +186,26 @@ function M:infos(tag, uids)
 	return timeout_call(service, "lua", "infos", uids)
 end
 
-function M:ranklist(tag, start, count)
+function M:ranklist(today,start, count)
+	--tag要从配置里面获取，如果没配就是不允许请求
+
+	local setting =  timeout_call(rankmgr.addr, "lua", "get_setting", self.appname)
+	if type(setting) == "string" then
+		local ok,_setting = pcall(cjson.decode,setting)
+		if not ok then
+			return errcode.NO_CONFIG
+		end
+		setting = _setting
+	end
+	local tag = setting.tag
+	if not tag or tag == "nil" then
+		return errcode.NO_CONFIG
+	end
+	if today then
+		tag = tag .. os.date("%Y%m%d")
+	else
+		tag = tag .. os.date("%Y%m%d",os.time() - 86400)
+	end
 	if not self:cache_services({tag}) then
 		return errcode.RANK_SERVICE_CACHE_FAIL
 	end

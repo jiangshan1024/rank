@@ -16,6 +16,12 @@ function M.new_config_dbtbl()
 	return dbtbl
 end
 
+function M.new_setting_dbtbl()
+	local dbtbl = M.new_dbtbl(const.DB_NAME, const.DB_TBL_SETTING_NAME)
+	dbtbl:createIndex({{appname = 1}, unique = true})
+	return dbtbl
+end
+
 local config_dbtbl
 function M.get_config_dbtbl()
 	if config_dbtbl then
@@ -23,6 +29,15 @@ function M.get_config_dbtbl()
 	end
 	config_dbtbl = M.new_config_dbtbl()
 	return config_dbtbl
+end
+
+local setting_dbtbl
+function M.get_setting_dbtbl()
+	if setting_dbtbl then
+		return setting_dbtbl
+	end
+	setting_dbtbl = M.new_setting_dbtbl()
+	return setting_dbtbl
 end
 
 return M
