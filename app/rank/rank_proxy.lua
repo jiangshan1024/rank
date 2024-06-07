@@ -144,9 +144,9 @@ function M:query(today,uid)
 		return errcode.NO_CONFIG
 	end
 	if today then
-		tag = tag .. os.date("%Y%m%d")
+		tag = tag  .. "_".. os.date("%Y%m%d")
 	else
-		tag = tag .. os.date("%Y%m%d",os.time() - 86400)
+		tag = tag .. "_" .. os.date("%Y%m%d",os.time() - 86400)
 	end
 	if not self:cache_services({tag}) then
 		return errcode.RANK_SERVICE_CACHE_FAIL
