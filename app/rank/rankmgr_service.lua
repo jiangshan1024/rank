@@ -29,7 +29,7 @@ return function()
 		local query = {appname = appname,setting_name="query_limit"}
 		local dbtbl = db.get_setting_dbtbl()
 		local ret = dbtbl:findOne(query,{_id = false})
-		-- log.debug(ret,"rankmgr_service",cjson.encode(ret))
+		log.debug("get_setting",cjson.encode({ret}))
 		if ret then
 			return ret.data
 		else
@@ -43,6 +43,7 @@ return function()
 		if (type(config) ~= "string") then
 			config = cjson.encode(config)
 		end
+		log.info("setting:",cjson.encode(config))
 		-- 写入数据库
 		local dbtbl = db.get_setting_dbtbl()
 		local query = {setting_name = "query_limit",appname=appname}
