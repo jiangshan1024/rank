@@ -4,7 +4,7 @@ local errcode = require "app.errcode"
 local const = require "app.const"
 local rankmgr = require "app.rank.rankmgr"
 local cjson = require "cjson"
-
+local setting_rank_mgr_addr =  nil
 local M = {}
 local mt = { __index = M }
 
@@ -49,11 +49,13 @@ function M.get(appname)
 end
 
 function M:set_config(config)
-	return timeout_call(rankmgr.addr, "lua", "set_config", self.appname, config)
+	setting_rank_mgr_addr = setting_rank_mgr_addr or rankmgr.addr
+	return timeout_call(setting_rank_mgr_addr, "lua", "set_config", self.appname, config)
 end
 
 function M:set_setting(config)
-	return timeout_call(rankmgr.addr, "lua", "set_setting", self.appname,config)
+	setting_rank_mgr_addr = setting_rank_mgr_addr or rankmgr.addr
+	return timeout_call(setting_rank_mgr_addr, "lua", "set_setting", self.appname,config)
 end
 
 function M:cache_services(tags)
@@ -122,13 +124,13 @@ function M:delete(tags, uid)
 	return errcode.OK
 end
 
-function M:query(today,uid)
+function M:query(date,uid)
 	--tag要从配置里面获取，如果没配就是不允许请求
 	-- if not self:cache_services({tag}) then
 	-- 	return errcode.RANK_SERVICE_CACHE_FAIL
 	-- end
-
-	local setting =  timeout_call(rankmgr.addr, "lua", "get_setting", self.appname)
+	setting_rank_mgr_addr = setting_rank_mgr_addr or rankmgr.addr
+	local setting =  timeout_call(setting_rank_mgr_addr, "lua", "get_setting", self.appname)
 	if type(setting) == "string" then
 		local ok,_setting = pcall(cjson.decode,setting)
 		if not ok then
@@ -143,11 +145,13 @@ function M:query(today,uid)
 	if not tag or tag == "nil" then
 		return errcode.NO_CONFIG
 	end
-	if today then
-		tag = tag  .. "_".. os.date("%Y%m%d")
-	else
-		tag = tag .. "_" .. os.date("%Y%m%d",os.time() - 86400)
-	end
+	date = string.gsub(date, "-", "")
+	tag = tag .. "_" .. date
+	-- if date then
+	-- 	tag = tag  .. "_".. os.date("%Y%m%d")
+	-- else
+	-- 	tag = tag .. "_" .. os.date("%Y%m%d",os.time() - 86400)
+	-- end
 	if not self:cache_services({tag}) then
 		return errcode.RANK_SERVICE_CACHE_FAIL
 	end
@@ -156,10 +160,10 @@ function M:query(today,uid)
 	return timeout_call(service, "lua", "query", uid)
 end
 
-function M:infos(today,uids)
+function M:infos(date,uids)
 	--tag要从配置里面获取，如果没配就是不允许请求
-
-	local setting =  timeout_call(rankmgr.addr, "lua", "get_setting", self.appname)
+	setting_rank_mgr_addr = setting_rank_mgr_addr or rankmgr.addr
+	local setting =  timeout_call(setting_rank_mgr_addr, "lua", "get_setting", self.appname)
 	if type(setting) == "string" then
 		local ok,_setting = pcall(cjson.decode,setting)
 		if not ok then
@@ -172,11 +176,13 @@ function M:infos(today,uids)
 	if not tag or tag == "nil" then
 		return errcode.NO_CONFIG
 	end
-	if today then
-		tag = tag .. "_".. os.date("%Y%m%d")
-	else
-		tag = tag .. "_".. os.date("%Y%m%d",os.time() - 86400)
-	end
+	date = string.gsub(date, "-", "")
+	tag = tag .. "_" .. date
+	-- if date then
+	-- 	tag = tag .. "_".. os.date("%Y%m%d")
+	-- else
+	-- 	tag = tag .. "_".. os.date("%Y%m%d",os.time() - 86400)
+	-- end
 
 	if not self:cache_services({tag}) then
 		return errcode.RANK_SERVICE_CACHE_FAIL
@@ -186,10 +192,11 @@ function M:infos(today,uids)
 	return timeout_call(service, "lua", "infos", uids)
 end
 
-function M:ranklist(today,start, count)
+function M:ranklist(date,start, count)
 	--tag要从配置里面获取，如果没配就是不允许请求
 
-	local setting =  timeout_call(rankmgr.addr, "lua", "get_setting", self.appname)
+	setting_rank_mgr_addr = setting_rank_mgr_addr or rankmgr.addr
+	local setting =  timeout_call(setting_rank_mgr_addr, "lua", "get_setting", self.appname)
 	if type(setting) == "string" then
 		local ok,_setting = pcall(cjson.decode,setting)
 		if not ok then
@@ -201,11 +208,13 @@ function M:ranklist(today,start, count)
 	if not tag or tag == "nil" then
 		return errcode.NO_CONFIG
 	end
-	if today then
-		tag = tag .. "_".. os.date("%Y%m%d")
-	else
-		tag = tag .. "_".. os.date("%Y%m%d",os.time() - 86400)
-	end
+	date = string.gsub(date, "-", "")
+	tag = tag .. "_" .. date
+	-- if today then
+	-- 	tag = tag .. "_".. os.date("%Y%m%d")
+	-- else
+	-- 	tag = tag .. "_".. os.date("%Y%m%d",os.time() - 86400)
+	-- end
 	if not self:cache_services({tag}) then
 		return errcode.RANK_SERVICE_CACHE_FAIL
 	end
