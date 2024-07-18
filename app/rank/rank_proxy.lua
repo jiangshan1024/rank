@@ -145,6 +145,7 @@ function M:query(date,uid)
 	if not tag or tag == "nil" then
 		return errcode.NO_CONFIG
 	end
+	if tag == "buyu" then tag = "buyu_2d" end
 	date = string.gsub(date, "-", "")
 	tag = tag .. "_" .. date
 	-- if date then
@@ -176,6 +177,7 @@ function M:infos(date,uids)
 	if not tag or tag == "nil" then
 		return errcode.NO_CONFIG
 	end
+	if tag == "buyu" then tag = "buyu_2d" end
 	date = string.gsub(date, "-", "")
 	tag = tag .. "_" .. date
 	-- if date then
@@ -208,6 +210,7 @@ function M:ranklist(date,start, count)
 	if not tag or tag == "nil" then
 		return errcode.NO_CONFIG
 	end
+	if tag == "buyu" then tag = "buyu_2d" end
 	date = string.gsub(date, "-", "")
 	tag = tag .. "_" .. date
 	-- if today then

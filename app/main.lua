@@ -1,11 +1,21 @@
 local wlua = require "wlua"
 local rank_proxy = require "app.rank.rank_proxy"
 local errcode = require "app.errcode"
+
+local service = require "skynet.service"
+local skynet = require "skynet"
+
 local util = require "util"
 local log = require "log"
 local cjson = require "cjson"
+local mongo_mgr = require "app.rank.mongo_mgr"
+
 
 local app = wlua:default()
+
+
+
+
 
 app:get("/", function (c)
 	log.info(package.cpath)
@@ -27,14 +37,8 @@ app:post("/setsetting", function (c)
 		return
 	end
 
-	local proxy = rank_proxy.get(appname)
-	if proxy == nil then
-		c:send_json({
-			code = errcode.RANK_INIT_FAIL
-		})
-		return
-	end
-	local code = proxy:set_setting(config)
+	local code = skynet.call(".mongo_mgr","lua","set_rank_setting",appname,config)
+
 	c:send_json({
 		code = code
 	})
@@ -51,14 +55,7 @@ app:post("/setappconfig", function (c)
 		return
 	end
 
-	local proxy = rank_proxy.get(appname)
-	if proxy == nil then
-		c:send_json({
-			code = errcode.RANK_INIT_FAIL
-		})
-		return
-	end
-	local code = proxy:set_config(config)
+	local code = skynet.call(".mongo_mgr","lua","set_rank_config",appname,config)
 	c:send_json({
 		code = code
 	})
@@ -218,3 +215,8 @@ end)
 
 app:run()
 
+skynet.fork(function()
+	local mongomgr_addr = service.new(".mongo_mgr",mongo_mgr)
+	skynet.name(".mongo_mgr",mongomgr_addr)
+	skynet.send(mongomgr_addr,"lua","init")
+end)

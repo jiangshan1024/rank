@@ -1,6 +1,7 @@
 local skiplist = require "skiplist.c"
 local util_table = require "util.table"
 local log = require "log"
+local skynet = require "skynet"
 
 local mt = {}
 mt.__index = mt
@@ -49,18 +50,7 @@ function mt:change(uid, addscore, info)
 end
 
 function mt:_db_update(uid, score, info)
-	-- 更新数据库数据
-	local data = {
-		["$set"] = {
-			score = score,
-			info = info,
-		}
-	}
-	local ok, err, ret = self.dbtbl:safe_update({uid = uid}, data, true, false)
-	if (not ok) or (not ret) or (ret.n ~= 1) then
-		log.error("save rank failed. uid:", uid, ", score:",
-			score, ", info:", util_table.tostring(info), ", err:", err)
-	end
+	skynet.send(".mongo_mgr","lua","update",self.dbname,self.tblname,uid, score, info)
 end
 
 function mt:rem(uid)
@@ -74,10 +64,7 @@ function mt:rem(uid)
 end
 
 function mt:_db_delete(uid)
-	local ok, err, ret = self.dbtbl:safe_delete({uid= uid}, true)
-	if (not ok) or (not ret) or (ret.n ~= 1) then
-		log.error("delete from rank failed. uid:", uid, ", err:", err)
-	end
+	skynet.send(".mongo_mgr","lua","delete",self.dbname,self.tblname,uid)
 end
 
 function mt:limit(count)
@@ -165,31 +152,21 @@ function mt:dump()
 end
 
 function mt:_load_db()
-	local ret = self.dbtbl:find({}, { _id = 0 })
-	while ret:hasNext() do
-		local data = ret:next()
-		self:_add(data.uid, data.score, data.info)
+	local r_data = skynet.call(".mongo_mgr","lua","load_rank",self.dbname,self.tblname)
+	for _,v in ipairs(r_data) do
+		self:_add(v[1], v[2], v[3])
 	end
 end
 
 local M = {}
 
-local mongo = require "skynet.db.mongo"
-
-local function new_dbtbl(db_conf, dbname, tblname)
-	log.debug("new_dbtbl:", db_conf, dbname, tblname)
-	local db_conn = mongo.client(db_conf)
-	local dbtbl = db_conn[dbname][tblname]
-	dbtbl:createIndex({{ uid = 1 }, unique = true})
-	log.debug("new_dbtbl ok")
-	return dbtbl
-end
 
 function M.new(db_conf, dbname, tblname)
 	local obj = {}
 	obj.sl = skiplist()
 	obj.tbl = {}
-	obj.dbtbl = new_dbtbl(db_conf, dbname, tblname)
+	obj.dbname = dbname
+	obj.tblname = tblname
 	setmetatable(obj, mt)
 	obj:_load_db()
 	return obj
